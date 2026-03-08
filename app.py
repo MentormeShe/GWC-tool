@@ -29,8 +29,14 @@ if uploaded_file is not None:
     st.success(f"Successfully loaded: {uploaded_file.name}")
 
     # Ensure necessary columns exist
-    required_cols = ['First Name', 'Email']
-    missing_cols = [col for col in required_cols if col not in df.columns]
+   # Strip spaces and lower-case all column names
+df.columns = df.columns.str.strip()
+df.columns = df.columns.str.replace('\xa0', '')  # remove hidden non-breaking spaces
+df.columns = df.columns.str.lower()
+
+# Required columns (also lowercase)
+required_cols = ['first name', 'email']
+missing_cols = [col for col in required_cols if col not in df.columns]
     
     if missing_cols:
         st.error(f"Missing required columns: {', '.join(missing_cols)}. Please check your sheet.")
