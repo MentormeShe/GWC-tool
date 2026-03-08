@@ -1,1 +1,3 @@
-streamlit (next line) pandas (next line) openpyxl
+streamlit
+pandas
+openpyxl
