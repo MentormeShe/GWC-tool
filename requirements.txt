@@ -1,0 +1,1 @@
+streamlit (next line) pandas (next line) openpyxl
