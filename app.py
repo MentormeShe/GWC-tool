@@ -6,141 +6,190 @@ from email.mime.multipart import MIMEMultipart
 import io
 
 # --- PAGE SETUP ---
-st.set_page_config(page_title="MMC Strike Bot", page_icon="🤖", layout="wide")
-st.title("🤖 Mentor Me Collective: Strike Bot")
-st.markdown("Upload your track's attendance sheet to auto-audit absences and trigger Strike emails.")
+st.set_page_config(page_title="MMC Track Manager", page_icon="🤖", layout="wide")
+st.title("🤖 Mentor Me Collective: Track Manager Bot")
 
-# --- SIDEBAR: EMAIL SETTINGS ---
-st.sidebar.header("Email Configuration")
-sender_email = st.sidebar.text_input("Sender Email (e.g., GWG@mentormecollective.com)")
-sender_password = st.sidebar.text_input("Email App Password", type="password")
-st.sidebar.caption("Note: Use an App Password if using Gmail/Google Workspace.")
+# --- TABS ---
+tab1, tab2 = st.tabs(["Applicant Selection", "Track Attendance & Strike Bot"])
 
-# --- MAIN APP ---
-uploaded_file = st.file_uploader("Upload Attendance Sheet (CSV or Excel)", type=["csv", "xlsx"])
+# ----------------------------
+# TAB 1: APPLICANT SELECTION
+# ----------------------------
+with tab1:
+    st.header("📋 Applicant Selection")
+    uploaded_file = st.file_uploader("Upload Applicant Sheet (CSV/Excel)", type=["csv","xlsx"], key="applicants")
+    
+    if uploaded_file is not None:
+        # Read file
+        if uploaded_file.name.endswith('.csv'):
+            df = pd.read_csv(uploaded_file)
+        else:
+            df = pd.read_excel(uploaded_file, engine='openpyxl')
+        
+        st.success(f"Successfully loaded: {uploaded_file.name}")
+        
+        # --- CLEAN COLUMNS ---
+        df.columns = df.columns.str.strip().str.replace('\xa0','').str.lower().str.replace(':','')
+        
+        # Map messy headers
+        column_map = {
+            'first name': 'first name',
+            'last name': 'last name',
+            'email address': 'email',
+            'where are you located?': 'location',
+            'google cloud launchpad track preference': 'track_preference'
+        }
+        df.rename(columns=column_map, inplace=True)
+        
+        # --- REQUIRED COLUMNS ---
+        required_cols = ['first name','email','location','track_preference']
+        missing_cols = [c for c in required_cols if c not in df.columns]
+        if missing_cols:
+            st.error(f"Missing columns: {', '.join(missing_cols)}")
+        else:
+            # --- SIDEBAR CRITERIA ---
+            st.sidebar.header("Selection Criteria")
+            min_present = st.sidebar.slider("Minimum Present Weeks (if any data)", 0, 15, 0)
+            max_absent = st.sidebar.slider("Maximum Absences Allowed (if any data)", 0, 15, 15)
+            region_limits = st.sidebar.text_input("Regional Limits (format: AMER=50,EMEA=30,APAC=20)", value="AMER=50,EMEA=30,APAC=20")
+            
+            # --- MAP LOCATIONS TO REGIONS ---
+            region_map = {
+                'usa':'AMER', 'canada':'AMER',
+                'india':'APAC', 'china':'APAC',
+                'germany':'EMEA', 'uk':'EMEA', 'france':'EMEA'
+                # extend as needed
+            }
+            df['region'] = df['location'].str.lower().map(region_map)
+            
+            # --- FILTER / SELECT CANDIDATES ---
+            # Apply any numeric filters if you have attendance columns
+            if min_present > 0 or max_absent < 15:
+                # Example: calculate presents/absents if sheet has week columns named "week 1", "week 2", etc.
+                week_cols = [c for c in df.columns if 'week' in c]
+                if week_cols:
+                    df['total_absences'] = df[week_cols].apply(lambda row: list(row.astype(str).str.lower()).count('absent'), axis=1)
+                    df['total_present'] = df[week_cols].apply(lambda row: list(row.astype(str).str.lower()).count('present'), axis=1)
+                    df = df[(df['total_present']>=min_present) & (df['total_absences']<=max_absent)]
+            
+            # Apply regional limits
+            limits = {item.split('=')[0]:int(item.split('=')[1]) for item in region_limits.split(',')}
+            selected = df.groupby('region').head(9999)  # start with all
+            final_selection = pd.DataFrame()
+            for region, limit in limits.items():
+                region_df = selected[selected['region']==region].head(limit)
+                final_selection = pd.concat([final_selection, region_df])
+            
+            st.success(f"✅ Selected {len(final_selection)} applicants based on criteria")
+            st.dataframe(final_selection, use_container_width=True)
+            
+            # Download button
+            output = io.BytesIO()
+            if uploaded_file.name.endswith('.csv'):
+                final_selection.to_csv(output,index=False)
+                mime_type = "text/csv"
+                new_file_name = "SELECTED_" + uploaded_file.name
+            else:
+                final_selection.to_excel(output,index=False)
+                mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                new_file_name = "SELECTED_" + uploaded_file.name
+            output.seek(0)
+            st.download_button(label="📥 Download Selected Applicants", data=output.getvalue(), file_name=new_file_name, mime=mime_type)
 
-if uploaded_file is not None:
-    # --- READ FILE ---
-    if uploaded_file.name.endswith('.csv'):
-        df = pd.read_csv(uploaded_file)
-    else:
-        df = pd.read_excel(uploaded_file, engine='openpyxl')
-
-    st.success(f"Successfully loaded: {uploaded_file.name}")
-
-    # --- CLEAN & NORMALIZE COLUMNS ---
-    df.columns = df.columns.str.strip()              # remove leading/trailing spaces
-    df.columns = df.columns.str.replace('\xa0','')   # remove hidden non-breaking spaces
-    df.columns = df.columns.str.lower()              # lowercase all headers
-    df.columns = df.columns.str.replace(':','')      # remove trailing colons
-
-    # Map messy headers to expected columns
-    column_map = {
-        'first name': 'first name',
-        'email address': 'email'
-    }
-    df.rename(columns=column_map, inplace=True)
-
-    # --- CHECK REQUIRED COLUMNS ---
-    required_cols = ['first name','email']
-    missing_cols = [col for col in required_cols if col not in df.columns]
-    if missing_cols:
-        st.error(f"Missing required columns: {', '.join(missing_cols)}. Please check your sheet.")
-    else:
+# ---------------------------------
+# TAB 2: TRACK ATTENDANCE / STRIKE
+# ---------------------------------
+with tab2:
+    st.header("📊 Track Attendance & Strike Bot")
+    
+    uploaded_file = st.file_uploader("Upload Track Attendance Sheet (CSV/Excel)", type=["csv","xlsx"], key="attendance")
+    
+    if uploaded_file is not None:
+        if uploaded_file.name.endswith('.csv'):
+            df = pd.read_csv(uploaded_file)
+        else:
+            df = pd.read_excel(uploaded_file, engine='openpyxl')
+        
+        st.success(f"Successfully loaded: {uploaded_file.name}")
+        
+        # --- CLEAN COLUMNS ---
+        df.columns = df.columns.str.strip().str.replace('\xa0','').str.lower().str.replace(':','')
+        
         # Ensure strike column exists
         if 'strike_level_sent' not in df.columns:
             df['strike_level_sent'] = 0
-
+        
         # --- AUDIT LOGIC ---
         email_queue = []
-
-        for index, row in df.iterrows():
-            first_name = str(row['first name'])
-            email = str(row['email'])
-            last_strike_sent = int(row['strike_level_sent']) if pd.notna(row['strike_level_sent']) else 0
-
-            # Count absences
-            total_absences = list(row.astype(str).str.strip().str.lower()).count('absent')
-
-            # Check if a new strike is needed
-            if total_absences > 0 and total_absences > last_strike_sent and total_absences <= 4:
-                # --- Email Templates ---
-                if total_absences == 1:
-                    subject = "Strike 1: Missed Track Sync - Action Required"
-                    body = f"Hi {first_name},\n\nWe noticed you missed a weekly track sync. Please attend 'Workshop Wednesday' to make up for this absence.\n\nMake-up Form link is in the YouTube description of the Workshop session.\n\nBest,\nMentor Me Collective Support"
-                elif total_absences == 2:
-                    subject = "Strike 2: Second Absence Notice"
-                    body = f"Hi {first_name},\n\nYou now have 2 absences. Per the Code of Conduct, attendance is mandatory to maintain your spot in the program.\n\nPlease utilize Workshop Wednesday to make up missed sessions.\n\nBest,\nMentor Me Collective Support"
-                elif total_absences == 3:
-                    subject = "Strike 3: FINAL WARNING - Imminent Removal"
-                    body = f"URGENT: {first_name},\n\nYou have reached 3 absences. This is your final warning. A 4th missed session will result in removal from the program.\n\nIf experiencing blockers, review the FAQ and use the Ticket-to-Talk Escalation Form immediately.\n\nBest,\nMentor Me Collective Support"
-                elif total_absences == 4:
-                    subject = "Strike 4: Notice of Program Removal"
-                    body = f"Hi {first_name},\n\nYou have reached 4 absences. This triggers automatic removal from the program.\n\nCoursera and Slack access will be revoked within 24 hours.\n\nBest,\nMentor Me Collective Support"
-
+        week_cols = [c for c in df.columns if 'week' in c]
+        
+        for idx,row in df.iterrows():
+            first_name = row.get('full name', str(idx))
+            email = row.get('email', '')
+            last_strike = int(row['strike_level_sent']) if pd.notna(row['strike_level_sent']) else 0
+            total_absences = list(row[week_cols].astype(str).str.lower()).count('absent')
+            
+            if total_absences>0 and total_absences>last_strike and total_absences<=4:
+                # Strike emails
+                if total_absences==1:
+                    subject = "Strike 1: Missed Track Sync"
+                    body = f"Hi {first_name}, you missed 1 session."
+                elif total_absences==2:
+                    subject = "Strike 2: Second Absence"
+                    body = f"Hi {first_name}, you missed 2 sessions."
+                elif total_absences==3:
+                    subject = "Strike 3: FINAL WARNING"
+                    body = f"Hi {first_name}, you missed 3 sessions."
+                else:
+                    subject = "Strike 4: Program Removal"
+                    body = f"Hi {first_name}, you missed 4 sessions. You will be removed."
+                
                 email_queue.append({
-                    "Index": index,
-                    "First Name": first_name,
-                    "Email": email,
-                    "Total Absences": total_absences,
-                    "Strike Level": total_absences,
-                    "Subject": subject,
-                    "Body": body
+                    'Index': idx, 'First Name': first_name, 'Email': email,
+                    'Total Absences': total_absences, 'Strike Level': total_absences,
+                    'Subject': subject, 'Body': body
                 })
-
-        # --- PREVIEW DASHBOARD ---
-        if len(email_queue) > 0:
-            st.warning(f"⚠️ Found {len(email_queue)} scholars who require Strike Emails.")
-
-            queue_df = pd.DataFrame(email_queue)[["First Name","Email","Total Absences","Strike Level"]]
-            st.dataframe(queue_df, use_container_width=True)
-
-            if st.button("🚀 Send Warning Emails"):
+        
+        if len(email_queue)>0:
+            st.warning(f"⚠️ {len(email_queue)} students require strikes")
+            st.dataframe(pd.DataFrame(email_queue)[['First Name','Email','Total Absences','Strike Level']], use_container_width=True)
+            
+            sender_email = st.sidebar.text_input("Sender Email for Attendance Tab", key="email2")
+            sender_password = st.sidebar.text_input("App Password", type='password', key="pwd2")
+            
+            if st.button("🚀 Send Strike Emails"):
                 if not sender_email or not sender_password:
-                    st.error("Please enter your Email Credentials in the sidebar first!")
+                    st.error("Enter email credentials")
                 else:
                     try:
                         server = smtplib.SMTP('smtp.gmail.com', 587)
                         server.starttls()
                         server.login(sender_email, sender_password)
-
-                        progress_bar = st.progress(0)
-
+                        progress = st.progress(0)
                         for i, task in enumerate(email_queue):
                             msg = MIMEMultipart()
                             msg['From'] = sender_email
                             msg['To'] = task['Email']
                             msg['Subject'] = task['Subject']
                             msg.attach(MIMEText(task['Body'], 'plain'))
-
                             server.send_message(msg)
-                            df.at[task["Index"], 'strike_level_sent'] = task["Strike Level"]
-                            progress_bar.progress((i + 1) / len(email_queue))
-
+                            df.at[task['Index'],'strike_level_sent'] = task['Strike Level']
+                            progress.progress((i+1)/len(email_queue))
                         server.quit()
-                        st.success("✅ All emails sent successfully!")
-
-                        # --- DOWNLOAD UPDATED FILE ---
+                        st.success("✅ All emails sent!")
+                        
                         output = io.BytesIO()
                         if uploaded_file.name.endswith('.csv'):
-                            df.to_csv(output, index=False)
-                            mime_type = "text/csv"
-                            new_file_name = "UPDATED_" + uploaded_file.name
+                            df.to_csv(output,index=False)
+                            mime_type="text/csv"
+                            new_file_name="UPDATED_"+uploaded_file.name
                         else:
-                            df.to_excel(output, index=False)
-                            mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            new_file_name = "UPDATED_" + uploaded_file.name
+                            df.to_excel(output,index=False)
+                            mime_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            new_file_name="UPDATED_"+uploaded_file.name
                         output.seek(0)
-
-                        st.download_button(
-                            label="📥 Download Updated Attendance Sheet",
-                            data=output.getvalue(),
-                            file_name=new_file_name,
-                            mime=mime_type
-                        )
-                        st.info("Upload this updated sheet back to Google Drive so strikes are tracked next week!")
-
+                        st.download_button("📥 Download Updated Attendance Sheet", data=output.getvalue(), file_name=new_file_name, mime=mime_type)
                     except Exception as e:
-                        st.error(f"Failed to send emails. Error: {e}")
+                        st.error(f"Failed to send emails: {e}")
         else:
-            st.success("🎉 No scholars require intervention this week! Everyone is up to date.")
+            st.success("🎉 No strikes required this week!")
