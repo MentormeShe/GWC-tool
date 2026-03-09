@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Navbar smooth background change */
+.navbar {
+  transition: background-color 0.5s ease, padding 0.3s ease;
+}
+
+.navbar.scrolled {
+  background-color: rgba(30, 41, 59, 0.95); /* dark navy */
+  padding: 0.5rem 2rem;
+}
+
+/* Hover effects for nav items */
+.nav-link {
+  @apply text-gray-300 hover:text-white transition-colors duration-300 ease-in-out;
+}
+
+/* Subtle hover scaling for cards */
+.track-card {
+  @apply bg-gray-800 border border-gray-700 rounded-lg p-6 m-4 transition-transform duration-300 ease-in-out;
+}
+
+.track-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
