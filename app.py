@@ -67,18 +67,39 @@ with tab1:
             "IT Automation with Python", "IT Support"
         ]
 
-        # Safely find the track column
+        # Safely find columns
         track_column = next((col for col in df.columns if "Track Preference" in col), None)
+        region_column = next((col for col in df.columns if "Region" in col), None)
+
         if not track_column:
             st.error("No track preference column found in your uploaded file!")
         else:
             track_results = []
+
+            track_colors = {
+                "UX Design": "#6EE7B7",
+                "Project Management": "#60A5FA",
+                "Data Analytics": "#FBBF24",
+                "Advanced Data Analytics": "#F472B6",
+                "Business Intelligence": "#A78BFA",
+                "Cybersecurity": "#F87171",
+                "Digital Marketing & E-commerce": "#34D399",
+                "IT Automation with Python": "#FCD34D",
+                "IT Support": "#38BDF8"
+            }
+
             for track in tracks:
                 track_df = df[df[track_column].str.contains(track, na=False)]
-                selected = track_df.sort_values("AI Score", ascending=False).head(max_per_track)
+
+                if region_column:
+                    selected = track_df.sort_values([region_column, "AI Score"], ascending=[True, False]).head(max_per_track)
+                else:
+                    selected = track_df.sort_values("AI Score", ascending=False).head(max_per_track)
+
                 if len(selected) > 0:
+                    color = track_colors.get(track, "#9CA3AF")
                     st.markdown(
-                        f"<div class='track-card'><h3>{track}</h3><p>{len(selected)} selected</p></div>",
+                        f"<div class='track-card' style='background-color:{color};'><h3>{track}</h3><p>{len(selected)} selected</p></div>",
                         unsafe_allow_html=True
                     )
                     st.dataframe(selected)
