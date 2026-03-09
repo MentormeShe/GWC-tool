@@ -1,73 +1,82 @@
-body{
-background:#f4f6ff;
-font-family:Arial, Helvetica, sans-serif;
-}
-
-/* HERO */
-
-.hero{
-background:linear-gradient(90deg,#6a5acd,#ff7f50);
-padding:30px;
-border-radius:14px;
-color:white;
-text-align:center;
-margin-bottom:25px;
-}
-
-/* TRACK CARDS */
-
-.track-card{
-background:white;
-padding:20px;
-border-radius:12px;
-box-shadow:0px 6px 15px rgba(0,0,0,0.1);
-margin-bottom:10px;
-transition:0.3s;
-}
-
-.track-card:hover{
-transform:translateY(-5px);
-box-shadow:0px 12px 25px rgba(0,0,0,0.15);
-}
-
-/* BUTTONS */
-
-button{
-background:linear-gradient(90deg,#6a5acd,#ff7f50)!important;
-color:white!important;
-border-radius:8px!important;
-}
-
-/* FILE UPLOADER */
-
-[data-testid="stFileUploader"]{
-border:2px dashed #6a5acd;
-padding:15px;
-border-radius:12px;
-background:white;
-}
-
-/* TABLE */
-
-[data-testid="stDataFrame"]{
-background:white;
-border-radius:10px;
-padding:10px;
-}}
-
-/* Dataframe hover */
-[data-testid="stDataFrame"] tbody tr:hover {
-    background-color: #eef1ff;
-}
-
-/* Sidebar */
-[data-testid="stSidebar"] {
-    background-color: #ffffff;
-}
-
-/* Footer */
-.footer {
+/* ---------- HERO HEADER ---------- */
+.hero {
     text-align: center;
-    color: gray;
+    background: linear-gradient(90deg, #00C9FF, #92FE9D);
+    color: white;
+    padding: 40px 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    animation: fadeIn 1s ease-in-out;
+}
+
+.hero h1 {
+    font-size: 3em;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px #00000030;
+}
+
+.hero p {
+    font-size: 1.2em;
+    font-weight: 500;
+}
+
+/* ---------- TRACK CARDS ---------- */
+.track-card {
+    border-radius: 15px;
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
     padding: 20px;
+    margin-bottom: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.track-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+/* ---------- TABLE STYLING ---------- */
+[data-testid="stDataFrame"] table {
+    border-collapse: separate !important;
+    border-spacing: 0 8px !important;
+}
+
+[data-testid="stDataFrame"] th, 
+[data-testid="stDataFrame"] td {
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+}
+
+/* ---------- AI SCORE HIGHLIGHT ---------- */
+.score-high {
+    background-color: #92FE9D;
+    font-weight: bold;
+    color: #064635;
+    text-align: center;
+}
+
+.score-medium {
+    background-color: #FFFB7D;
+    font-weight: bold;
+    text-align: center;
+}
+
+.score-low {
+    background-color: #FF4C4C;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+/* ---------- BUTTON HOVER ---------- */
+button:hover {
+    transform: scale(1.05);
+    transition: 0.3s ease;
+    cursor: pointer;
 }
