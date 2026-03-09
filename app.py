@@ -49,9 +49,8 @@ with tab1:
         else:
             # --- SIDEBAR CRITERIA ---
             st.sidebar.header("Selection Criteria")
-            min_present = st.sidebar.slider("Minimum Present Weeks (if any data)", 0, 15, 0)
-            max_absent = st.sidebar.slider("Maximum Absences Allowed (if any data)", 0, 15, 15)
-            region_limits = st.sidebar.text_input("Regional Limits (format: AMER=50,EMEA=30,APAC=20)", value="AMER=50,EMEA=30,APAC=20")
+            total_needed = st.sidebar.number_input("Total Applicants Needed", min_value=1, max_value=10000, value=100)
+            region_limits_input = st.sidebar.text_input("Regional Limits (format: AMER=50,EMEA=30,APAC=20)", value="AMER=50,EMEA=30,APAC=20")
             
             # --- MAP LOCATIONS TO REGIONS ---
             region_map = {
@@ -62,25 +61,33 @@ with tab1:
             }
             df['region'] = df['location'].str.lower().map(region_map)
             
-            # --- FILTER / SELECT CANDIDATES ---
-            # Apply any numeric filters if you have attendance columns
-            if min_present > 0 or max_absent < 15:
-                # Example: calculate presents/absents if sheet has week columns named "week 1", "week 2", etc.
-                week_cols = [c for c in df.columns if 'week' in c]
-                if week_cols:
-                    df['total_absences'] = df[week_cols].apply(lambda row: list(row.astype(str).str.lower()).count('absent'), axis=1)
-                    df['total_present'] = df[week_cols].apply(lambda row: list(row.astype(str).str.lower()).count('present'), axis=1)
-                    df = df[(df['total_present']>=min_present) & (df['total_absences']<=max_absent)]
+            # --- APPLY REGIONAL LIMITS ---
+            limits = {item.split('=')[0]:int(item.split('=')[1]) for item in region_limits_input.split(',')}
             
-            # Apply regional limits
-            limits = {item.split('=')[0]:int(item.split('=')[1]) for item in region_limits.split(',')}
-            selected = df.groupby('region').head(9999)  # start with all
             final_selection = pd.DataFrame()
-            for region, limit in limits.items():
-                region_df = selected[selected['region']==region].head(limit)
-                final_selection = pd.concat([final_selection, region_df])
+            tracks = df['track_preference'].dropna().unique()
             
-            st.success(f"✅ Selected {len(final_selection)} applicants based on criteria")
+            for track in tracks:
+                track_df = df[df['track_preference']==track]
+                track_df = track_df.sort_values(by='first name')  # optional sorting within track
+                
+                # Sort by region
+                for region in ['AMER','EMEA','APAC']:
+                    region_df = track_df[track_df['region']==region]
+                    limit = limits.get(region, len(region_df))
+                    final_selection = pd.concat([final_selection, region_df.head(limit)])
+            
+            # --- SORT FINAL OUTPUT BY TRACK → REGION ---
+            track_order = {track:i for i, track in enumerate(tracks)}
+            region_order = {'AMER':0,'EMEA':1,'APAC':2}
+            final_selection['track_order'] = final_selection['track_preference'].map(track_order)
+            final_selection['region_order'] = final_selection['region'].map(region_order)
+            final_selection = final_selection.sort_values(by=['track_order','region_order']).drop(columns=['track_order','region_order'])
+            
+            # Limit total number of applicants
+            final_selection = final_selection.head(total_needed)
+            
+            st.success(f"✅ Selected {len(final_selection)} applicants")
             st.dataframe(final_selection, use_container_width=True)
             
             # Download button
