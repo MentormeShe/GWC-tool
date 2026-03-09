@@ -61,9 +61,13 @@ with tab1:
 
         st.success("Applicants Loaded Successfully 🎉")
 
-        # AI Score (fun example: length of data in row)
+        # ---------- STRIP COLUMN WHITESPACES ----------
+        df.columns = df.columns.str.strip()
+
+        # ---------- AI SCORE ----------
         df["AI Score"] = df.fillna("").astype(str).apply(lambda row: sum(len(str(x)) for x in row), axis=1)
 
+        # ---------- TRACK DEFINITIONS ----------
         tracks = [
             "UX Design",
             "Project Management",
@@ -76,51 +80,55 @@ with tab1:
             "IT Support"
         ]
 
-        track_column = "Google Cloud Launchpad Track Preference:"
-
-        st.divider()
-        st.header("🎓 Selected Applicants by Track")
-        track_results = []
-
-        for track in tracks:
-            track_df = df[df[track_column].str.contains(track, na=False)]
-            selected = track_df.sort_values("AI Score", ascending=False).head(max_per_track)
-
-            if len(selected) > 0:
-                st.markdown(
-                    f"""
-                    <div class="track-card">
-                    <h3>{track}</h3>
-                    <p>{len(selected)} selected applicants</p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                st.dataframe(selected)
-
-                selected["Track"] = track
-                track_results.append(selected)
-
-        if track_results:
-            final_df = pd.concat(track_results)
+        # ---------- SAFELY FIND TRACK COLUMN ----------
+        track_column = next((col for col in df.columns if "Track Preference" in col), None)
+        if not track_column:
+            st.error("No track preference column found in your uploaded file!")
+        else:
             st.divider()
-            st.header("🏆 Final Selected Cohort")
-            st.dataframe(final_df)
+            st.header("🎓 Selected Applicants by Track")
+            track_results = []
 
-            # Track Distribution Chart
-            chart_data = final_df["Track"].value_counts().reset_index()
-            chart_data.columns = ["Track","Count"]
-            fig = px.bar(chart_data, x="Track", y="Count", title="Selected Applicants per Track")
-            st.plotly_chart(fig, use_container_width=True)
+            for track in tracks:
+                track_df = df[df[track_column].str.contains(track, na=False)]
 
-            # Download Button
-            st.download_button(
-                "Download Selected Applicants",
-                final_df.to_csv(index=False),
-                "selected_applicants.csv",
-                "text/csv"
-            )
+                selected = track_df.sort_values("AI Score", ascending=False).head(max_per_track)
+
+                if len(selected) > 0:
+                    st.markdown(
+                        f"""
+                        <div class="track-card">
+                        <h3>{track}</h3>
+                        <p>{len(selected)} selected applicants</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    st.dataframe(selected)
+
+                    selected["Track"] = track
+                    track_results.append(selected)
+
+            if track_results:
+                final_df = pd.concat(track_results)
+                st.divider()
+                st.header("🏆 Final Selected Cohort")
+                st.dataframe(final_df)
+
+                # Track Distribution Chart
+                chart_data = final_df["Track"].value_counts().reset_index()
+                chart_data.columns = ["Track","Count"]
+                fig = px.bar(chart_data, x="Track", y="Count", title="Selected Applicants per Track")
+                st.plotly_chart(fig, use_container_width=True)
+
+                # Download Button
+                st.download_button(
+                    "Download Selected Applicants",
+                    final_df.to_csv(index=False),
+                    "selected_applicants.csv",
+                    "text/csv"
+                )
 
 # ---------- TAB 2: Attendance & Strike Tracker ----------
 with tab2:
