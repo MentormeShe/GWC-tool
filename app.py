@@ -6,7 +6,11 @@ import smtplib
 from email.message import EmailMessage
 import os
 
-st.set_page_config(page_title="🚀 Mentor Me Collective", page_icon="🚀", layout="wide")
+st.set_page_config(
+    page_title="🚀 Mentor Me Collective",
+    page_icon="🚀",
+    layout="wide"
+)
 
 MAX_STRIKES = 3
 
@@ -40,7 +44,7 @@ tab1, tab2 = st.tabs(["🎯 Applicant Selection", "📋 Attendance & Strike Trac
 
 # ---------- TAB 1: Applicant Selection ----------
 with tab1:
-    st.header("<h2 id='selection'>Applicant Selection</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 id='selection'>Applicant Selection</h2>", unsafe_allow_html=True)
     max_per_track = st.sidebar.slider("Applicants per Track", 5, 200, 25)
     file = st.file_uploader("Upload Application Spreadsheet", type=["csv","xlsx"])
 
@@ -63,6 +67,7 @@ with tab1:
             "IT Automation with Python", "IT Support"
         ]
 
+        # Safely find the track column
         track_column = next((col for col in df.columns if "Track Preference" in col), None)
         if not track_column:
             st.error("No track preference column found in your uploaded file!")
@@ -72,7 +77,10 @@ with tab1:
                 track_df = df[df[track_column].str.contains(track, na=False)]
                 selected = track_df.sort_values("AI Score", ascending=False).head(max_per_track)
                 if len(selected) > 0:
-                    st.markdown(f"<div class='track-card'><h3>{track}</h3><p>{len(selected)} selected</p></div>", unsafe_allow_html=True)
+                    st.markdown(
+                        f"<div class='track-card'><h3>{track}</h3><p>{len(selected)} selected</p></div>",
+                        unsafe_allow_html=True
+                    )
                     st.dataframe(selected)
                     selected["Track"] = track
                     track_results.append(selected)
@@ -80,7 +88,7 @@ with tab1:
             if track_results:
                 final_df = pd.concat(track_results)
                 st.divider()
-                st.header("<h2 id='analytics'>Final Selected Cohort</h2>", unsafe_allow_html=True)
+                st.markdown("<h2 id='analytics'>Final Selected Cohort</h2>", unsafe_allow_html=True)
                 st.dataframe(final_df)
 
                 chart_data = final_df["Track"].value_counts().reset_index()
@@ -88,11 +96,16 @@ with tab1:
                 fig = px.bar(chart_data, x="Track", y="Count", title="Selected Applicants per Track")
                 st.plotly_chart(fig, use_container_width=True)
 
-                st.download_button("Download Selected Applicants", final_df.to_csv(index=False), "selected_applicants.csv","text/csv")
+                st.download_button(
+                    "Download Selected Applicants",
+                    final_df.to_csv(index=False),
+                    "selected_applicants.csv",
+                    "text/csv"
+                )
 
 # ---------- TAB 2: Attendance & Strike Tracker ----------
 with tab2:
-    st.header("<h2 id='attendance'>Attendance & Strike Tracker</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 id='attendance'>Attendance & Strike Tracker</h2>", unsafe_allow_html=True)
     attendance_file = st.file_uploader("Upload Attendance Sheet", type=["csv","xlsx"], key="attend")
 
     if attendance_file:
@@ -156,6 +169,11 @@ Please take immediate action to avoid further consequences.
                                 st.error(f"Failed to send to {name}: {e}")
                 st.success(f"Emails sent: {emails_sent}")
 
-        st.download_button("Download Updated Attendance + Strikes", edited_df.to_csv(index=False), "updated_attendance.csv","text/csv")
+        st.download_button(
+            "Download Updated Attendance + Strikes",
+            edited_df.to_csv(index=False),
+            "updated_attendance.csv",
+            "text/csv"
+        )
 
 st.markdown("<h6 style='text-align:center;color:gray;'>🚀 Built with ❤️ for Mentor Me Collective</h6>", unsafe_allow_html=True)
