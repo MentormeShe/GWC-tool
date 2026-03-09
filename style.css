@@ -1,110 +1,54 @@
-/* ===== General App Styling ===== */
+/* Background */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fb;
-    color: #333;
-    margin: 0;
-    padding: 0;
+    background-color: #f7f8fc;
 }
 
-/* Header gradient */
-h1, h2, h3 {
-    background: linear-gradient(90deg, #6a5acd, #ff7f50);
+/* Title */
+.main-title {
+    font-size: 42px;
+    font-weight: 700;
+    text-align: center;
+    background: linear-gradient(90deg,#6a5acd,#ff7f50);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-weight: 700;
-    margin-bottom: 10px;
 }
 
-/* Subtitles and descriptions */
-p, span {
-    color: #555;
-    font-size: 16px;
+/* Subtitle */
+.subtitle {
+    text-align: center;
+    font-size: 18px;
+    color: gray;
+    margin-bottom: 20px;
 }
 
 /* Buttons */
-.stButton>button {
-    background: linear-gradient(to right, #6a5acd, #ff7f50);
-    color: white;
-    font-size: 16px;
-    font-weight: 600;
-    border-radius: 12px;
-    padding: 8px 16px;
-    transition: all 0.3s ease;
+button {
+    background: linear-gradient(90deg,#6a5acd,#ff7f50) !important;
+    color: white !important;
+    border-radius: 10px !important;
+    border: none !important;
 }
 
-.stButton>button:hover {
-    transform: scale(1.05);
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
-}
-
-/* File uploader */
-.stFileUploader>div {
-    border-radius: 10px;
+/* File uploader box */
+[data-testid="stFileUploader"] {
     border: 2px dashed #6a5acd;
-    background-color: #fafafa;
-    padding: 20px;
-    transition: all 0.3s ease;
-}
-
-.stFileUploader>div:hover {
-    border-color: #ff7f50;
-    background-color: #f0f0ff;
-}
-
-/* Dataframe tables */
-.stDataFrame div[data-testid="stDataFrameContainer"] table {
-    border-collapse: collapse;
-    width: 100%;
-}
-
-.stDataFrame div[data-testid="stDataFrameContainer"] th {
-    background-color: #6a5acd;
-    color: white;
-    padding: 6px 10px;
-    text-align: center;
-}
-
-.stDataFrame div[data-testid="stDataFrameContainer"] td {
-    padding: 6px 10px;
-    text-align: center;
-    transition: all 0.2s ease;
-}
-
-.stDataFrame div[data-testid="stDataFrameContainer"] td:hover {
-    background-color: #f0f0ff;
-    cursor: pointer;
-}
-
-/* Track badges */
-.track-badge {
-    padding: 4px 8px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 600;
-    font-size: 14px;
-}
-
-/* Track colors */
-.track-foundation { background-color: #FFD700; }
-.track-data { background-color: #1E90FF; }
-.track-cloud { background-color: #32CD32; }
-
-/* Sidebar styling */
-.css-1d391kg {  /* Streamlit sidebar class may vary; tweak if needed */
-    background-color: #ffffff;
+    border-radius: 10px;
     padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.05);
 }
 
-/* Success animation */
-.success-confetti {
-    animation: confettiFall 1.2s ease-out forwards;
+/* Dataframe hover */
+[data-testid="stDataFrame"] tbody tr:hover {
+    background-color: #eef1ff;
 }
 
-@keyframes confettiFall {
-    0% {transform: translateY(-50px); opacity: 0;}
-    50% {opacity: 1;}
-    100% {transform: translateY(0px);}
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background-color: #ffffff;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    color: gray;
+    padding: 20px;
 }
