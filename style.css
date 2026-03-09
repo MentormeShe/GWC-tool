@@ -1,82 +1,56 @@
-/* ---------- HERO HEADER ---------- */
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
 .hero {
     text-align: center;
-    background: linear-gradient(90deg, #00C9FF, #92FE9D);
-    color: white;
-    padding: 40px 20px;
+    padding: 60px 20px;
+    background: radial-gradient(circle, #00ffff55, transparent);
     border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    animation: fadeIn 1s ease-in-out;
+    margin-bottom: 20px;
 }
 
 .hero h1 {
     font-size: 3em;
-    margin-bottom: 10px;
-    text-shadow: 2px 2px #00000030;
+    color: #00ffff;
+    text-shadow: 0 0 15px #00ffff;
 }
 
 .hero p {
-    font-size: 1.2em;
-    font-weight: 500;
+    font-size: 1.5em;
+    color: #fff;
+    text-shadow: 0 0 10px #00ffff;
 }
 
-/* ---------- TRACK CARDS ---------- */
 .track-card {
-    border-radius: 15px;
-    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
-    padding: 20px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid #00ffff44;
+    padding: 15px;
+    border-radius: 10px;
     margin-bottom: 15px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .track-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px #00ffff77;
 }
 
-/* ---------- TABLE STYLING ---------- */
-[data-testid="stDataFrame"] table {
-    border-collapse: separate !important;
-    border-spacing: 0 8px !important;
-}
-
-[data-testid="stDataFrame"] th, 
-[data-testid="stDataFrame"] td {
-    padding: 8px 12px !important;
-    border-radius: 8px !important;
-}
-
-/* ---------- AI SCORE HIGHLIGHT ---------- */
-.score-high {
-    background-color: #92FE9D;
+.stButton button {
+    background: linear-gradient(90deg, #00ffff, #ff00ff);
+    color: #000;
     font-weight: bold;
-    color: #064635;
-    text-align: center;
-}
-
-.score-medium {
-    background-color: #FFFB7D;
-    font-weight: bold;
-    text-align: center;
-}
-
-.score-low {
-    background-color: #FF4C4C;
-    font-weight: bold;
-    color: white;
-    text-align: center;
-}
-
-/* ---------- ANIMATIONS ---------- */
-@keyframes fadeIn {
-    from {opacity: 0;}
-    to {opacity: 1;}
-}
-
-/* ---------- BUTTON HOVER ---------- */
-button:hover {
-    transform: scale(1.05);
-    transition: 0.3s ease;
+    border-radius: 10px;
+    padding: 10px 20px;
+    border: none;
     cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.stButton button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px #ff00ff;
 }
