@@ -55,8 +55,6 @@ with tab1:
             df = pd.read_excel(file)
 
         st.success("Applicants Loaded Successfully 🎉")
-
-        # Strip whitespace from column names
         df.columns = df.columns.str.strip()
         df["AI Score"] = df.fillna("").astype(str).apply(lambda row: sum(len(str(x)) for x in row), axis=1)
 
@@ -67,7 +65,6 @@ with tab1:
             "IT Automation with Python", "IT Support"
         ]
 
-        # Safely find columns
         track_column = next((col for col in df.columns if "Track Preference" in col), None)
         region_column = next((col for col in df.columns if "Region" in col), None)
 
@@ -75,7 +72,6 @@ with tab1:
             st.error("No track preference column found in your uploaded file!")
         else:
             track_results = []
-
             track_colors = {
                 "UX Design": "#6EE7B7",
                 "Project Management": "#60A5FA",
@@ -90,13 +86,22 @@ with tab1:
 
             for track in tracks:
                 track_df = df[df[track_column].str.contains(track, na=False)]
-
+                
+                # ---------- REGION-AWARE ----------
                 if region_column:
-                    selected = track_df.sort_values([region_column, "AI Score"], ascending=[True, False]).head(max_per_track)
+                    for region, region_df in track_df.groupby(region_column):
+                        selected = region_df.sort_values("AI Score", ascending=False).head(max_per_track)
+                        color = track_colors.get(track, "#9CA3AF")
+                        st.markdown(
+                            f"<div class='track-card' style='background-color:{color};'><h3>{track} - {region}</h3><p>{len(selected)} selected</p></div>",
+                            unsafe_allow_html=True
+                        )
+                        st.dataframe(selected)
+                        selected["Track"] = track
+                        selected["Region"] = region
+                        track_results.append(selected)
                 else:
                     selected = track_df.sort_values("AI Score", ascending=False).head(max_per_track)
-
-                if len(selected) > 0:
                     color = track_colors.get(track, "#9CA3AF")
                     st.markdown(
                         f"<div class='track-card' style='background-color:{color};'><h3>{track}</h3><p>{len(selected)} selected</p></div>",
